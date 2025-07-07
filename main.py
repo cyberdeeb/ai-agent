@@ -8,12 +8,13 @@ from dotenv import load_dotenv
 def main():
     load_dotenv()
 
-    args = sys.argv[1:]
+    verbose = "--verbose" in sys.argv
+    args = [arg for arg in sys.argv[1:] if not arg.startswith("--")]
 
     if not args:
         print("AI Code Assistant")
-        print('\nUsage: python main.py "your prompt here"')
-        print('Example: python main.py "How do I build a todo list app?"')
+        print('\nUsage: python main.py "your prompt here" [--verbose]')
+        print('Example: python main.py "How do I build a calculator app?"')
         sys.exit(1)
 
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -25,14 +26,19 @@ def main():
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
     ]
 
-    generate_content(client, messages)
+    generate_content(client, messages, user_prompt, verbose)
 
 
-def generate_content(client, messages):
+def generate_content(client, messages, user_prompt, verbose):
     response = client.models.generate_content(
         model="gemini-2.0-flash-001",
         contents=messages,
     )
+
+    if verbose:
+        usage = response.usage_metadata
+        print(f'User prompt: {user_prompt}\n Prompt tokens: {usage.prompt_token_count}\n Response tokens: {usage.candidates_token_count}')
+
     print("Response:")
     print(response.text)
 
